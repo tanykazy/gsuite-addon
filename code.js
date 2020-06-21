@@ -12,8 +12,6 @@ const ADDON_NAME = PropertiesService.getScriptProperties().getProperty("ADDON_NA
 
 /**
  * Creates a menu entry in the Google Docs UI when the document is opened.
- * This method is only used by the regular add-on, and is never called by
- * the mobile add-on version.
  *
  * @param {object} e The event parameter for a simple onOpen trigger. To
  *     determine which authorization mode (ScriptApp.AuthMode) the trigger is
@@ -27,8 +25,6 @@ function onOpen(e) {
 
 /**
  * Runs when the add-on is installed.
- * This method is only used by the regular add-on, and is never called by
- * the mobile add-on version.
  *
  * @param {object} e The event parameter for a simple onInstall trigger. To
  *     determine which authorization mode (ScriptApp.AuthMode) the trigger is
@@ -42,13 +38,24 @@ function onInstall(e) {
 
 /**
  * Opens a sidebar in the document containing the add-on's user interface.
- * This method is only used by the regular add-on, and is never called by
- * the mobile add-on version.
  */
 function showSidebar() {
   var ui = HtmlService.createHtmlOutputFromFile('sidebar')
     .setTitle(ADDON_NAME);
   DocumentApp.getUi().showSidebar(ui);
+}
+
+/**
+ * Gets the stored user preferences for the grade, if they exist.
+ *
+ * @return {Object} The user's origin and destination language preferences, if they exist.
+ */
+function getPreferences() {
+  var userProperties = PropertiesService.getUserProperties();
+
+  return {
+    grade: userProperties.getProperty('grade')
+  };
 }
 
 /**
@@ -97,23 +104,6 @@ function getSelectedText() {
 }
 
 /**
- * Gets the stored user preferences for the origin and destination languages,
- * if they exist.
- * This method is only used by the regular add-on, and is never called by
- * the mobile add-on version.
- *
- * @return {Object} The user's origin and destination language preferences, if
- *     they exist.
- */
-function getPreferences() {
-  var userProperties = PropertiesService.getUserProperties();
-
-  return {
-    grade: userProperties.getProperty('grade')
-  };
-}
-
-/**
  * Gets the user-selected text and translates it from the origin language to the
  * destination language. The languages are notated by their two-letter short
  * form. For example, English is 'en', and Spanish is 'es'. The origin language
@@ -158,26 +148,48 @@ function getTextAndTranslation(grade, savePrefs) {
  * translated text in the first element that can contain text and removes the
  * other elements.
  *
- * @param {string} newText The text with which to replace the current selection.
+ * @param {number} grade Grade number.
  */
 function addComment(grade) {
-  var document = DocumentApp.getActiveDocument();
-  var body = document.getBody();
-  var text = body.editAsText();
-  var string = text.getText();
   var bookmarks = {};
+  var selection = DocumentApp.getActiveDocument().getSelection();
 
-  for (var offset = 0; offset < string.length; offset++) {
-    var position = document.newPosition(text, offset);
-    var surroundingText = position.getSurroundingText().getText();
-    var surroundingTextOffset = position.getSurroundingTextOffset();
+  if (selection !== null) {
+    var elements = selection.getRangeElements();
 
-    var result = analyzeKanji(surroundingText[surroundingTextOffset]);
+    for (var i = 0; i < elements.length; i++) {
+      var element = elements[i];
+      var startOffset = element.getStartOffset();
+      var endOffsetInclusive = element.getEndOffsetInclusive();
 
-    if (result[surroundingText[surroundingTextOffset]] > grade) {
-      // var bookmark = position.insertBookmark();
-      // bookmarks[surroundingText[surroundingTextOffset]] = bookmark.getId();
-      bookmarks[surroundingText[surroundingTextOffset]] = offset;
+      for (var offset = startOffset; offset < endOffsetInclusive; offset++) {
+        var position = document.newPosition(element, offset);
+        var surroundingText = position.getSurroundingText().getText();
+        var surroundingTextOffset = position.getSurroundingTextOffset();
+
+        var result = analyzeKanji(surroundingText[surroundingTextOffset]);
+
+        if (result[surroundingText[surroundingTextOffset]] > grade) {
+          bookmarks[surroundingText[surroundingTextOffset]] = offset;
+        }
+      }
+    }
+  } else {
+    var document = DocumentApp.getActiveDocument();
+    var body = document.getBody();
+    var text = body.editAsText();
+    var string = text.getText();
+
+    for (var offset = 0; offset < string.length; offset++) {
+      var position = document.newPosition(text, offset);
+      var surroundingText = position.getSurroundingText().getText();
+      var surroundingTextOffset = position.getSurroundingTextOffset();
+
+      var result = analyzeKanji(surroundingText[surroundingTextOffset]);
+
+      if (result[surroundingText[surroundingTextOffset]] > grade) {
+        bookmarks[surroundingText[surroundingTextOffset]] = offset;
+      }
     }
   }
 
@@ -185,15 +197,11 @@ function addComment(grade) {
 }
 
 /**
- * Given text, translate it from the origin language to the destination
- * language. The languages are notated by their two-letter short form. For
- * example, English is 'en', and Spanish is 'es'. The origin language may be
- * specified as an empty string to indicate that Google Translate should
- * auto-detect the language.
+ * Extract the kanji from the given text and associate it with the grade to learn.
+ * The JSON format is a pair of Kanji and the grade level to learn it.
  *
- * @param {string} text text to translate.
- * @return {string} The result of the translation, or the original text if
- *     origin and dest languages are the same.
+ * @param {string} text Original text.
+ * @return {object} The result of the JSON object.
  */
 function analyzeKanji(text) {
   var json = {};
@@ -215,13 +223,16 @@ function analyzeKanji(text) {
   return json;
 }
 
+/**
+ * Jump cursor in the Document.
+ * 
+ * @param {number} offset Number of offset in Body object
+ */
 function jumpCursor(offset) {
   var document = DocumentApp.getActiveDocument();
   var body = document.getBody();
   var text = body.editAsText();
   var position = document.newPosition(text, offset);
-
-  Logger.log(offset)
 
   document.setCursor(position);
 }

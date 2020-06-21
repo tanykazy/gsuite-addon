@@ -49,27 +49,27 @@
           <b>Select grade</b>
           <div>
             <input type="radio" name="grade" id="radio-grade-1" value="1" checked="checked">
-            <label for="radio-grade-1">1</label>
+            <label for="radio-grade-1">1年</label>
           </div>
           <div>
             <input type="radio" name="grade" id="radio-grade-2" value="2">
-            <label for="radio-grade-2">2</label>
+            <label for="radio-grade-2">2年</label>
           </div>
           <div>
             <input type="radio" name="grade" id="radio-grade-3" value="3">
-            <label for="radio-grade-3">3</label>
+            <label for="radio-grade-3">3年</label>
           </div>
           <div>
             <input type="radio" name="grade" id="radio-grade-4" value="4">
-            <label for="radio-grade-4">4</label>
+            <label for="radio-grade-4">4年</label>
           </div>
           <div>
             <input type="radio" name="grade" id="radio-grade-5" value="5">
-            <label for="radio-grade-5">5</label>
+            <label for="radio-grade-5">5年</label>
           </div>
           <div>
             <input type="radio" name="grade" id="radio-grade-6" value="6">
-            <label for="radio-grade-6">6</label>
+            <label for="radio-grade-6">6年</label>
           </div>
         </div>
       </div>
@@ -90,10 +90,7 @@
   </div>
 
   <div class="sidebar bottom">
-    <!--
-      <img alt="Add-on logo" class="logo" src="https://www.gstatic.com/images/branding/product/1x/translate_48dp.png" width="27" height="27">
-      <span class="gray branding-text">Translate sample by Google</span>
-    -->
+    <span class="gray branding-text">Add-On nannenkanji by tanykazy</span>
   </div>
 
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
@@ -131,7 +128,6 @@
       this.disabled = true;
       $('#error').remove();
       var grade = $('input[name=grade]:checked').val();
-      // var dest = $('input[name=dest]:checked').val();
       var savePrefs = $('#save-prefs').is(':checked');
       google.script.run
         .withSuccessHandler(
@@ -177,7 +173,16 @@
         .addComment(grade);
     }
 
-    function createMovePos(pos){
+    /**
+     * Wrapper function for binding arguments.
+     * 
+     * @param {number} pos Offset number for position.
+     * @return {function} function with arguments bound.
+     */
+    function createMovePos(pos) {
+      /**
+       * Move cursor in the Document.
+       */
       function movePos() {
         google.script.run
           .withSuccessHandler(
