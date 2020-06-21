@@ -46,99 +46,27 @@ function showSidebar() {
 }
 
 /**
- * Gets the stored user preferences for the grade, if they exist.
+ * Gets the stored user preferences for the grade, if it exist.
  *
- * @return {Object} The user's origin and destination language preferences, if they exist.
+ * @return {Object} The user's grade preferences, if it exist.
  */
 function getPreferences() {
   var userProperties = PropertiesService.getUserProperties();
 
   return {
-    grade: userProperties.getProperty('grade')
+    grade: userProperties.getProperty('GRADE')
   };
 }
 
 /**
- * Gets the text the user has selected. If there is no selection,
- * this function displays an error message.
- *
- * @return {Array.<string>} The selected text.
+ * Sets the stored user preferences for the grade.
+ * 
+ * @param {number} grade Grade number.
  */
-function getSelectedText() {
-  var selection = DocumentApp.getActiveDocument().getSelection();
-  var text = [];
+function setPreferences(grade) {
+  var userProperties = PropertiesService.getUserProperties();
 
-  if (selection !== null) {
-    var elements = selection.getRangeElements();
-
-    for (var i = 0; i < elements.length; ++i) {
-      if (elements[i].isPartial()) {
-        var element = elements[i].getElement().asText();
-        var startIndex = elements[i].getStartOffset();
-        var endIndex = elements[i].getEndOffsetInclusive();
-
-        text.push(element.getText().substring(startIndex, endIndex + 1));
-      } else {
-        var element = elements[i].getElement();
-
-        // Only translate elements that can be edited as text; skip images and
-        // other non-text elements.
-        if (element.editAsText) {
-          var elementText = element.asText().getText();
-
-          // This check is necessary to exclude images, which return a blank
-          // text element.
-          if (elementText) {
-            text.push(elementText);
-          }
-        }
-      }
-    }
-  }
-
-  if (!text.length) {
-    throw new Error('Please select some text.');
-  }
-
-  return text;
-}
-
-/**
- * Gets the user-selected text and translates it from the origin language to the
- * destination language. The languages are notated by their two-letter short
- * form. For example, English is 'en', and Spanish is 'es'. The origin language
- * may be specified as an empty string to indicate that Google Translate should
- * auto-detect the language.
- *
- * @param {string} grade The two-letter short form for the origin language.
- * @param {boolean} savePrefs Whether to save the origin and destination
- *     language preferences.
- * @return {Object} Object containing the original text and the result of the
- *     translation.
- */
-function getTextAndTranslation(grade, savePrefs) {
-  if (savePrefs) {
-    PropertiesService.getUserProperties()
-      .setProperty('grade', grade);
-  }
-
-  var text = getSelectedText().join('\n');
-  var json = analyzeKanji(text);
-
-  for (c in json) {
-    if (json[c] < grade) {
-      delete json[c];
-    }
-  }
-
-  var output = ContentService.createTextOutput(JSON.stringify(json))
-    .setMimeType(ContentService.MimeType.JSON)
-    .getContent();
-
-  return {
-    text: text,
-    translation: output
-  };
+  userProperties.setProperty('GRADE', grade.toString());
 }
 
 /**
@@ -149,10 +77,12 @@ function getTextAndTranslation(grade, savePrefs) {
  * other elements.
  *
  * @param {number} grade Grade number.
+ * @return {Object} Object containing the kanji and grade.
  */
-function addComment(grade) {
-  var bookmarks = {};
-  var selection = DocumentApp.getActiveDocument().getSelection();
+function nannenkanji(grade) {
+  var bookmarks = [];
+  var document = DocumentApp.getActiveDocument();
+  var selection = document.getSelection();
 
   if (selection !== null) {
     var elements = selection.getRangeElements();
@@ -162,33 +92,42 @@ function addComment(grade) {
       var startOffset = element.getStartOffset();
       var endOffsetInclusive = element.getEndOffsetInclusive();
 
-      for (var offset = startOffset; offset < endOffsetInclusive; offset++) {
-        var position = document.newPosition(element, offset);
-        var surroundingText = position.getSurroundingText().getText();
-        var surroundingTextOffset = position.getSurroundingTextOffset();
+      if (element.getElement().editAsText) {
+        var textElement = element.getElement().editAsText();
 
-        var result = analyzeKanji(surroundingText[surroundingTextOffset]);
+        for (var offset = startOffset; offset < endOffsetInclusive; offset++) {
+          var position = document.newPosition(textElement, offset);
+          var surroundingText = position.getSurroundingText().getText();
+          var surroundingTextOffset = position.getSurroundingTextOffset();
+          var text = surroundingText[surroundingTextOffset];
+          var result = analyzeKanji(text);
 
-        if (result[surroundingText[surroundingTextOffset]] > grade) {
-          bookmarks[surroundingText[surroundingTextOffset]] = offset;
+          if (result[text] > grade) {
+            var bookmark = {};
+
+            bookmark[text] = offset;
+            bookmarks.push(bookmark);
+          }
         }
       }
     }
   } else {
-    var document = DocumentApp.getActiveDocument();
     var body = document.getBody();
-    var text = body.editAsText();
-    var string = text.getText();
+    var textElement = body.editAsText();
+    var string = textElement.getText();
 
     for (var offset = 0; offset < string.length; offset++) {
-      var position = document.newPosition(text, offset);
+      var position = document.newPosition(textElement, offset);
       var surroundingText = position.getSurroundingText().getText();
       var surroundingTextOffset = position.getSurroundingTextOffset();
+      var text = surroundingText[surroundingTextOffset];
+      var result = analyzeKanji(text);
 
-      var result = analyzeKanji(surroundingText[surroundingTextOffset]);
+      if (result[text] > grade) {
+        var bookmark = {};
 
-      if (result[surroundingText[surroundingTextOffset]] > grade) {
-        bookmarks[surroundingText[surroundingTextOffset]] = offset;
+        bookmark[text] = offset;
+        bookmarks.push(bookmark);
       }
     }
   }
@@ -224,15 +163,18 @@ function analyzeKanji(text) {
 }
 
 /**
- * Jump cursor in the Document.
+ * Select kanji in the Document.
  * 
- * @param {number} offset Number of offset in Body object
+ * @param {string} kanji kanji in Body object
  */
-function jumpCursor(offset) {
+function jumpCursor(kanji) {
   var document = DocumentApp.getActiveDocument();
   var body = document.getBody();
-  var text = body.editAsText();
-  var position = document.newPosition(text, offset);
+  var rangeBuilder = document.newRange();
+  var rangeElement = body.findText(kanji);
+  var startOffset = rangeElement.getStartOffset();
+  var endOffsetInclusive = rangeElement.getEndOffsetInclusive();
 
-  document.setCursor(position);
+  rangeBuilder.addElement(rangeElement.getElement(), startOffset, endOffsetInclusive);
+  document.setSelection(rangeBuilder.build());
 }
