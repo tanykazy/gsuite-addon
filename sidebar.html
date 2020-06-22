@@ -126,13 +126,13 @@
         .withSuccessHandler(
           function (returnSuccess, element) {
             for (var i = 0; i < returnSuccess.length; i++) {
-              for (kanji in returnSuccess[i]) {
-                var pos = returnSuccess[i][kanji];
-                var result = $('<p class="result"><a id="bookmark-' + pos + '" >' + kanji + ": " + pos + '</a></p>');
-                $('#button-bar').after(result);
-                $('#bookmark-' + pos)
-                  .click(createMovePos(kanji));
-              }
+              var kanji = returnSuccess[i].kanji;
+              var pos = returnSuccess[i].position;
+              var grade = returnSuccess[i].grade;
+              var result = $('<p class="result"><a id="bookmark-' + pos + '" >' + kanji + ": " + grade + '</a></p>');
+              $('#button-bar').after(result);
+              $('#bookmark-' + pos)
+                .click(createMovePos(kanji));
             }
             element.disabled = false;
           })

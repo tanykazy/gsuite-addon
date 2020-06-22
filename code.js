@@ -70,11 +70,7 @@ function setPreferences(grade) {
 }
 
 /**
- * Replaces the text of the current selection with the provided text, or
- * inserts text at the current cursor location. (There will always be either
- * a selection or a cursor.) If multiple elements are selected, only inserts the
- * translated text in the first element that can contain text and removes the
- * other elements.
+ * Search for Kanji in Document and make a list. The list is filtered by the kanji learned.
  *
  * @param {number} grade Grade number.
  * @return {Object} Object containing the kanji and grade.
@@ -95,7 +91,7 @@ function nannenkanji(grade) {
       if (element.getElement().editAsText) {
         var textElement = element.getElement().editAsText();
 
-        for (var offset = startOffset; offset < endOffsetInclusive; offset++) {
+        for (var offset = startOffset; offset <= endOffsetInclusive; offset++) {
           var position = document.newPosition(textElement, offset);
           var surroundingText = position.getSurroundingText().getText();
           var surroundingTextOffset = position.getSurroundingTextOffset();
@@ -103,10 +99,11 @@ function nannenkanji(grade) {
           var result = analyzeKanji(text);
 
           if (result[text] > grade) {
-            var bookmark = {};
-
-            bookmark[text] = offset;
-            bookmarks.push(bookmark);
+            bookmarks.push(createResult(
+              text,
+              offset,
+              result[text]
+            ));
           }
         }
       }
@@ -124,15 +121,31 @@ function nannenkanji(grade) {
       var result = analyzeKanji(text);
 
       if (result[text] > grade) {
-        var bookmark = {};
-
-        bookmark[text] = offset;
-        bookmarks.push(bookmark);
+        bookmarks.push(createResult(
+          text,
+          offset,
+          result[text]
+        ));
       }
     }
   }
 
   return bookmarks;
+}
+
+/**
+ * Create result object.
+ * 
+ * @param {string} kanji Kanji found in Document
+ * @param {number} position position of kanji in Document
+ * @param {number} grade Grade to learn the kanji
+ */
+function createResult(kanji, position, grade) {
+  return {
+    kanji: kanji,
+    position: position,
+    grade: grade
+  };
 }
 
 /**
