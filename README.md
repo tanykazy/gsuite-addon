@@ -37,10 +37,6 @@ $ clasp open
 Opening script: https://script.google.com/d/xxxxxGOOGLEーDOCS-IDxxxxxxxxxxx/edit
 ```
 
-## Usage
-
-You can test the app 
-
 ## Author
 
 tanykazy
