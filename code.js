@@ -99,7 +99,7 @@ function nannenkanji(grade) {
           var result = analyzeKanji(text);
 
           if (result[text] > grade) {
-            bookmarks.push(createResult(
+            bookmarks.unshift(createResult(
               text,
               offset,
               result[text]
@@ -121,7 +121,7 @@ function nannenkanji(grade) {
       var result = analyzeKanji(text);
 
       if (result[text] > grade) {
-        bookmarks.push(createResult(
+        bookmarks.unshift(createResult(
           text,
           offset,
           result[text]
