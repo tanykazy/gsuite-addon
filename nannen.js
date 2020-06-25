@@ -5,10 +5,6 @@
  * @return {number} the input converted into grade
  */
 function toGrade(kanji) {
-  if (!isKanji(kanji)) {
-    return 0;
-  }
-
   var grade = MAX_GRADE;
 
   for (var i = 0; i < TABLE.length; i++) {

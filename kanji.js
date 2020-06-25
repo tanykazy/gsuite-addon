@@ -1,11 +1,14 @@
 function isKanji(c) {
-  var unicode = c.charCodeAt(0);
-  if ((unicode >= 0x4e00 && unicode <= 0x9fcf) ||
-    (unicode >= 0x3400 && unicode <= 0x4dbf) ||
-    (unicode >= 0x20000 && unicode <= 0x2a6df) ||
-    (unicode >= 0xf900 && unicode <= 0xfadf) ||
-    (unicode >= 0x2f800 && unicode <= 0x2fa1f)) {
-    return true;
+  if (c) {
+    var unicode = c.charCodeAt(0);
+
+    if ((unicode >= 0x4e00 && unicode <= 0x9fcf) ||
+      (unicode >= 0x3400 && unicode <= 0x4dbf) ||
+      (unicode >= 0x20000 && unicode <= 0x2a6df) ||
+      (unicode >= 0xf900 && unicode <= 0xfadf) ||
+      (unicode >= 0x2f800 && unicode <= 0x2fa1f)) {
+      return true;
+    }
   }
 
   return false;

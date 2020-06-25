@@ -73,7 +73,7 @@ function setPreferences(grade) {
  * Search for Kanji in Document and make a list. The list is filtered by the kanji learned.
  *
  * @param {number} grade Grade number.
- * @return {Object} Object containing the kanji and grade.
+ * @return {Array} Array containing Object kanji and grade.
  */
 function nannenkanji(grade) {
   var bookmarks = [];
@@ -85,27 +85,13 @@ function nannenkanji(grade) {
 
     for (var i = 0; i < elements.length; i++) {
       var element = elements[i];
-      var startOffset = element.getStartOffset();
-      var endOffsetInclusive = element.getEndOffsetInclusive();
 
       if (element.getElement().editAsText) {
         var textElement = element.getElement().editAsText();
+        var startOffset = element.getStartOffset();
+        var endOffsetInclusive = element.getEndOffsetInclusive();
 
-        for (var offset = startOffset; offset <= endOffsetInclusive; offset++) {
-          var position = document.newPosition(textElement, offset);
-          var surroundingText = position.getSurroundingText().getText();
-          var surroundingTextOffset = position.getSurroundingTextOffset();
-          var text = surroundingText[surroundingTextOffset];
-          var result = analyzeKanji(text);
-
-          if (result[text] > grade) {
-            bookmarks.unshift(createResult(
-              text,
-              offset,
-              result[text]
-            ));
-          }
-        }
+        bookmarks.unshift(...scanTextElement(textElement, startOffset, endOffsetInclusive + 1));
       }
     }
   } else {
@@ -113,66 +99,51 @@ function nannenkanji(grade) {
     var textElement = body.editAsText();
     var string = textElement.getText();
 
-    for (var offset = 0; offset < string.length; offset++) {
-      var position = document.newPosition(textElement, offset);
-      var surroundingText = position.getSurroundingText().getText();
-      var surroundingTextOffset = position.getSurroundingTextOffset();
-      var text = surroundingText[surroundingTextOffset];
-      var result = analyzeKanji(text);
+    bookmarks = scanTextElement(textElement, 0, string.length);
+  }
 
-      if (result[text] > grade) {
-        bookmarks.unshift(createResult(
-          text,
-          offset,
-          result[text]
-        ));
-      }
-    }
+  for (var i = 0; i < bookmarks.length; i++){
+    if (bookmarks[i].grade < grade) {
+      bookmarks.splice(i, 1);
+    }  
   }
 
   return bookmarks;
 }
 
 /**
- * Create result object.
  * 
- * @param {string} kanji Kanji found in Document
- * @param {number} position position of kanji in Document
- * @param {number} grade Grade to learn the kanji
+ * @param {Object} textElement 
+ * @param {number} start 
+ * @param {number} end 
  */
-function createResult(kanji, position, grade) {
-  return {
-    kanji: kanji,
-    position: position,
-    grade: grade
-  };
-}
+function scanTextElement(textElement, start, end) {
+  var document = DocumentApp.getActiveDocument();
+  var results = [];
+  var hash = {};
 
-/**
- * Extract the kanji from the given text and associate it with the grade to learn.
- * The JSON format is a pair of Kanji and the grade level to learn it.
- *
- * @param {string} text Original text.
- * @return {object} The result of the JSON object.
- */
-function analyzeKanji(text) {
-  var json = {};
+  for (var offset = start; offset < end; offset++) {
+    var position = document.newPosition(textElement, offset);
+    var surroundingText = position.getSurroundingText().getText();
+    var surroundingTextOffset = position.getSurroundingTextOffset();
+    var text = surroundingText[surroundingTextOffset];
 
-  if (text) {
-    for (var i = 0; i < text.length; i++) {
-      var c = text[i];
+    if (isKanji(text)) {
+      if (!hash[text]) {
+        hash[text] = true;
 
-      if (isKanji(c)) {
-        if (json[c] === undefined) {
-          var grade = toGrade(c);
+        var grade = toGrade(text);
 
-          json[c] = grade;
-        }
+        results.unshift({
+          kanji: text,
+          position: offset,
+          grade: grade
+        });
       }
     }
   }
 
-  return json;
+  return results;
 }
 
 /**
