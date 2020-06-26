@@ -6,7 +6,7 @@
 
 ## Testing
 
-To test this Add-on, please follow the steps bellow.
+To test this Add-on, please follow the steps as bellow.
 
 ```
 # create a document file on your G Drive and connect it to the Google App Script Workspace
