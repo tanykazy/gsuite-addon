@@ -1,4 +1,4 @@
-# G Suite Add-on
+# G Suite Add-ons Repository
 
 ## Requirement
 
