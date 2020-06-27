@@ -42,7 +42,7 @@ Created version 1.
 Please refer to the following document to test your addon on G Suite: https://developers.google.com/gsuite/add-ons/how-tos/testing-editor-addons
 
 
-##
+##Add-on
 
 [nannenkanji](./nannenkanji/)
 
