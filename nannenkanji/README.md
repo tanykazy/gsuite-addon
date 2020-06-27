@@ -1,4 +1,8 @@
-# G Suite Add-ons Repository
+# G Suite Add-on: Nannenkanji
+
+![screenshot](screenshot.png)
+
+Nannenkanji is a G Suite Add-on to identify the grade in which you learn Chinese characters(kanji) in a document.
 
 ## Requirement
 
@@ -6,10 +10,9 @@
 
 ## Testing
 
-To test this Add-on, please follow the steps as bellow.
+To test this Add-on, please follow the steps bellow.
 
 ```
-# create a document file on your G Drive and connect it to the Google App Script Workspace
 $ clasp create Kanji xxxxxGOOGLEーDOCS-IDxxxxxxxxxxx
 ? Create which script? docs
 Created new Google Doc: https://drive.google.com/open?id=xxxxxGOOGLEーDOCS-IDxxxxxxxxxxx
@@ -18,7 +21,6 @@ Warning: files in subfolder are not accounted for unless you set a '.claspignore
 Cloned 1 file.
 └─ appsscript.json
 
-# push fules to Google App Script Workspace
 $ clasp push
 └─ appsscript.json
 └─ code.js
@@ -27,19 +29,13 @@ $ clasp push
 └─ sidebar.html
 Pushed 5 files.
 
-# open Google App Script Workspace
-$ clasp open
-Opening script: https://script.google.com/d/xxxxxGOOGLEーDOCS-IDxxxxxxxxxxx/edit
-
-# deploy the codes on Google App Script Workspace so that you can use the addon on the document
 $ clasp deploy
 Created version 1.
 - xxxxxGOOGLEーDOCS-IDxxxxxxxxxxx @1.
 
-# Then you can test the addon from Menu bar.
+$ clasp open
+Opening script: https://script.google.com/d/xxxxxGOOGLEーDOCS-IDxxxxxxxxxxx/edit
 ```
-
-Please refer to the following document to test your addon on G Suite: https://developers.google.com/gsuite/add-ons/how-tos/testing-editor-addons
 
 ## Author
 
